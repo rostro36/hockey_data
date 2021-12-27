@@ -1,4 +1,4 @@
-#import flask
+# import flask
 import dash
 import dash_html_components as html
 import dash_core_components as dcc
@@ -7,8 +7,8 @@ from plotting import plot_bracket, plot_position
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-options = ['nhl', 'east', 'west', 'atlantic',
-           'metropolitan', 'central', 'pacific']
+options = ['NHL', 'East', 'West', 'ATL',
+           'MET', 'CEN', 'PAC']
 options.extend([key for key in TEAMS])
 
 # server = flask.Flask(__name__)
@@ -31,7 +31,7 @@ position_page = html.Div([
     dcc.Dropdown(
         id='position-dropdown',
         options=[{'label': key, 'value': key} for key in options],
-        value=['nhl'],
+        value=['NHL'],
         multi=True
     ),
     html.Div(id='position-content'),
@@ -54,7 +54,7 @@ bracket_page = html.Div([
     dcc.Dropdown(
         id='bracket-dropdown',
         options=[{'label': key, 'value': key} for key in options],
-        value=['nhl'],
+        value=['NHL'],
         multi=True
     ),
     html.Div(id='bracket-content'),

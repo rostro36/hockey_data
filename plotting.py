@@ -1,12 +1,15 @@
 import plotly.graph_objects as go
-import pandas as pd
+# import pandas as pd
 from PIL import Image
 from ast import literal_eval
+import datetime
+from sql_connection import get_data
 
-information = pd.read_csv('data/2021-Dec-16.csv')
-# only take 32 teams and drop ID number
-information = information.iloc[:, 1:].set_index(
-    keys='ID', drop=True).to_dict('index')
+# information = pd.read_csv('data/2021-Dec-16.csv')
+information = get_data(
+    'combined', datetime.datetime.now().strftime('%Y-%m-%d'))
+information = information.set_index(
+    keys='Team_name', drop=True).to_dict('index')
 
 line_styles = ['solid', 'dot', 'dash', 'longdash', 'dashdot', 'longdashdot']
 
@@ -15,7 +18,7 @@ def plot_position(value):
     fig = go.Figure()
     fig.add_trace(go.Bar(
         y=[-i for i in range(len(value))],
-        x=[information[team]['Salaries G'] for team in value],
+        x=[information[team]['Salaries_G'] for team in value],
         customdata=[team.capitalize() for team in value], hovertemplate='(%{customdata}, %{x:$.3s})',
         name='GOL',
         orientation='h',
@@ -27,7 +30,7 @@ def plot_position(value):
     ))
     fig.add_trace(go.Bar(
         y=[-i for i in range(len(value))],
-        x=[information[team]['Salaries DEF'] for team in value],
+        x=[information[team]['Salaries_DEF'] for team in value],
         customdata=[team.capitalize() for team in value], hovertemplate='(%{customdata}, %{x:$.3s})',
         name='DEF',
         orientation='h',
@@ -39,7 +42,7 @@ def plot_position(value):
 
     fig.add_trace(go.Bar(
         y=[-i for i in range(len(value))],
-        x=[information[team]['Salaries OFF'] for team in value],
+        x=[information[team]['Salaries_OFF'] for team in value],
         customdata=[team.capitalize() for team in value], hovertemplate='(%{customdata}, %{x:$.3s})',
         name='OFF',
         orientation='h',
@@ -80,7 +83,7 @@ def plot_bracket(value):
             occurrence = 0
         colour_dict[colour_string] = occurrence
         fig.add_trace(go.Scatter(
-            y=[information[team]['Comb salaries' +
+            y=[information[team]['Comb_salaries' +
                                  str(bracket).zfill(2)] for bracket in range(11)],
             x=[i for i in range(11)],
             customdata=[team.capitalize() for bracket in range(11)],
