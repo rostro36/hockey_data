@@ -1,43 +1,29 @@
 from team_dict import TEAMS, DIVISIONS, CONFERENCES
 from sqlalchemy import create_engine
 import pandas as pd
-import mysql.connector
-from mysql.connector import errorcode
+import pymysql
 
-user = 'root'
-password = 'jannik'
-host = 'localhost'
+user = 'user'
+password = 'password'
+host = 'host'
 port = '3306'
 db_name = 'hockey_teams'
 
-connector_string = "mysql+mysqlconnector://"+user + \
+connector_string = "mysql+pymysql://"+user + \
     ":"+password+"@"+host+":"+port+"/"+db_name
 
 
-def create_database(cursor):
-    try:
-        cursor.execute(
-            "CREATE DATABASE {} DEFAULT CHARACTER SET 'utf8'".format(db_name))
-    except mysql.connector.Error as err:
-        print("Failed creating database: {}".format(err))
-        exit(1)
-
-
 def setup_tables():
-    mydb = mysql.connector.connect(
+    mydb = pymysql.connect(
         host=host, user=user, password=password)
     mycursor = mydb.cursor()
     try:
+        mycursor.execute("CREATE DATABASE IF NOT EXISTS {}".format(db_name))
         mycursor.execute("USE {}".format(db_name))
-    except mysql.connector.Error as err:
+    except pymysql.Error as err:
         print("Database {} does not exists.".format(db_name))
-        if err.errno == errorcode.ER_BAD_DB_ERROR:
-            create_database(mycursor)
-            print("Database {} created successfully.".format(db_name))
-            mydb.database = db_name
-        else:
-            print(err)
-            exit(1)
+        print(err)
+        exit(1)
     try:
         mycursor.execute("SHOW TABLES LIKE 'team_data';")
         if mycursor.fetchone() is None:
@@ -165,7 +151,7 @@ def setup_tables():
 
 
 def populate_teams():
-    mydb = mysql.connector.connect(
+    mydb = pymysql.connect(
         host=host, user=user, password=password, database=db_name)
     mycursor = mydb.cursor()
     sql = "INSERT INTO team_data (Start_year, Team_name, Conference, Divison, Colour) VALUES (%s, %s, %s, %s, %s)"
@@ -179,7 +165,6 @@ def populate_teams():
     try:
         mycursor.executemany(sql, val)
         mydb.commit()
-        print(mycursor.rowcount, "was inserted.")
     except ValueError as vx:
         print(vx)
         exit(1)
@@ -189,7 +174,7 @@ def populate_teams():
     finally:
         mycursor.close()
         mydb.close()
-    return
+    return str(mycursor.rowcount) + "was inserted."
 
 
 def append_data(df, tablename):  # hockey_teams or salary_data
@@ -209,7 +194,7 @@ def append_data(df, tablename):  # hockey_teams or salary_data
 
 
 def get_latest_date(latest_date):
-    mydb = mysql.connector.connect(
+    mydb = pymysql.connect(
         host=host, user=user, password=password, database=db_name)
     mycursor = mydb.cursor()
     date = None

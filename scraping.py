@@ -164,4 +164,4 @@ if __name__ == "__main__":
     team_stats = team_stats.drop(['Division', 'Conference'], axis='columns')
     team_stats = team_stats.append(aggregated_df, ignore_index=True)
     append_data(team_stats, 'salary_data')
-    team_stats.to_csv('data/'+str(now.strftime('%Y-%m-%d'))+'.csv')
+    # team_stats.to_csv('data/'+str(now.strftime('%Y-%m-%d'))+'.csv')

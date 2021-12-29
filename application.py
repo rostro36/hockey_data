@@ -35,10 +35,19 @@ position_page = html.Div([
         multi=True
     ),
     html.Div(id='position-content'),
-    html.Br(),
-    dcc.Link('Go to bracket overview', href='/bracket'),
-    html.Br(),
-    dcc.Link('Go back to home', href='/'),
+    dcc.Markdown('''# Position overview
+This plot shows the roster cap (not in IR, LTIR, "non-roster", taxi squad and no dead cap)
+of different teams and the average of divisions, conferences and the whole league as listed on
+[CapFriendly](https://www.capfriendly.com/).
+
+This view compares the expenses for the different positions across teams.
+
+One can hover for the exact numbers.
+
+The amount and order of the teams is based on the selection at the top of the page, which can also be searched.
+## Other links
+- [Go to bracket overview](./bracket)
+- [Go back to home](.)''')
 ])
 
 
@@ -57,11 +66,25 @@ bracket_page = html.Div([
         value=['NHL'],
         multi=True
     ),
-    html.Div(id='bracket-content'),
-    html.Br(),
-    dcc.Link('Go to position overview', href='/position'),
-    html.Br(),
-    dcc.Link('Go back to home', href='/'),
+    dcc.Markdown('''# Salary bracket overview
+This plot shows the roster cap (not in IR, LTIR, "non-roster", taxi squad and no dead cap)
+of different teams and the average of divisions, conferences and the whole league as listed on
+[CapFriendly](https://www.capfriendly.com/) in USD.
+
+This view compares the amount of money spent in different salary brackets.
+So if there are five million $ spent in the one million $ bracket,
+this implies that there are five players making around one million $ each.
+
+This gives interesting insights where money is spent for one team: rather the depth or the top?
+
+Also a comparison between teams can yield interesting results.
+
+One can hover for the exact numbers.
+
+The amount and order of the teams is based on the selection at the top of the page, which can also be searched.
+## Other links
+- [Go to position overview](./position)
+- [Go back to home](.)''')
 ])
 
 
