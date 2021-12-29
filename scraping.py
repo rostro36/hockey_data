@@ -1,7 +1,11 @@
 import urllib3
 import re
-from team_dict import TEAMS, DIVISIONS, CONFERENCES, DATE
+from sql_connection import get_data, append_data
+from team_dict import TEAMS
 import pandas as pd
+import datetime
+
+now = datetime.datetime.utcnow()
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -20,19 +24,19 @@ def flatten(listlist):
     return [[item for List in listlist for item in List]][0]
 
 
-COLUMNS = ['ID', 'Conference', 'Division', 'Colour']
-easier_player_columns = [['OFF players' + f'{i:02}' for i in range(11)], ['Players OFF'],
-                         ['DEF players' +
-                             f'{i:02}' for i in range(11)],  ['Players DEF'],
-                         ['G players' +
-                             f'{i:02}' for i in range(11)], ['Players G'],
-                         ['Comb players'+f'{i:02}' for i in range(11)], ['Total players']]
-easier_salary_columns = [['OFF salaries'+f'{i:02}' for i in range(11)], ['Salaries OFF'],
-                         ['DEF salaries' +
-                             f'{i:02}' for i in range(11)], ['Salaries DEF'],
-                         ['G salaries' +
-                             f'{i:02}' for i in range(11)], ['Salaries G'],
-                         ['Comb salaries'+f'{i:02}' for i in range(11)], ['Total salaries']]
+COLUMNS = ['Team_name', 'Conference', 'Division', 'Scraping_date']
+easier_player_columns = [['OFF_players' + f'{i:02}' for i in range(11)], ['Players_OFF'],
+                         ['DEF_players' +
+                             f'{i:02}' for i in range(11)],  ['Players_DEF'],
+                         ['G_players' +
+                             f'{i:02}' for i in range(11)], ['Players_G'],
+                         ['Comb_players'+f'{i:02}' for i in range(11)], ['Total_players']]
+easier_salary_columns = [['OFF_salaries'+f'{i:02}' for i in range(11)], ['Salaries_OFF'],
+                         ['DEF_salaries' +
+                             f'{i:02}' for i in range(11)], ['Salaries_DEF'],
+                         ['G_salaries' +
+                             f'{i:02}' for i in range(11)], ['Salaries_G'],
+                         ['Comb_salaries'+f'{i:02}' for i in range(11)], ['Total_salaries']]
 COLUMNS.extend(flatten(easier_player_columns))
 COLUMNS.extend(flatten(easier_salary_columns))
 
@@ -87,7 +91,7 @@ def parse_group(group):
     return salary_bracket, player_bracket
 
 
-def get_team(identifier):
+def get_team(identifier, team_background):
     output = re.split(UNITS, download(URL_BASE+identifier), 3)
     [forwards, defence, goalies, _] = output
 
@@ -103,38 +107,61 @@ def get_team(identifier):
     combined_players, total_players = calculate_combined(team_players)
     flat_team_salaries = flatten(team_salaries)
     flat_team_players = flatten(team_players)
-    data = [flatten([TEAMS[identifier], flat_team_players, combined_players, [
-                    total_players], flat_team_salaries, combined_salaries, [total_salaries]])]
+
+    data = [flatten([list(team_background[team_background['Team_name'] == identifier].iloc[0]),
+                     [now.strftime('%Y-%m-%d')],
+                     flat_team_players, combined_players, [total_players],
+                     flat_team_salaries, combined_salaries, [total_salaries]])]
     return pd.DataFrame(data=data, columns=COLUMNS)
 
 
 def aggregate_df(df):
-    division_df = df.drop(['ID', 'Conference', 'Colour'], axis='columns')
+    division_df = df.drop(['Team_name', 'Conference'
+                           ], axis='columns')
     division_df = division_df.groupby('Division').mean().convert_dtypes()
-    division_df = DIVISIONS.merge(division_df, on='Division', how='inner')
+    division_df['Team_name'] = division_df.index
+    division_df['Scraping_date'] = [
+        now.strftime('%Y-%m-%d')]*len(division_df.index)
+    division_df['index'] = range(len(division_df.index))
+    division_df = division_df.set_index('index')
 
-    conference_df = df.drop(['ID', 'Division', 'Colour'], axis='columns')
+    conference_df = df.drop(
+        ['Team_name', 'Division'  # , 'Scraping_date'
+         ], axis='columns')
     conference_df = conference_df.groupby('Conference').mean().convert_dtypes()
-    conference_df = CONFERENCES.merge(
-        conference_df, on='Conference', how='inner')
+    conference_df['Team_name'] = conference_df.index
+    conference_df['Scraping_date'] = [
+        now.strftime('%Y-%m-%d')]*len(conference_df.index)
+    conference_df['index'] = range(len(conference_df.index))
+    conference_df = conference_df.set_index('index')
 
     league_df = df.drop(
-        ['ID', 'Division', 'Conference', 'Colour'], axis='columns')
+        ['Team_name', 'Division', 'Conference'
+         ], axis='columns')
     league_df = league_df.mean().to_frame().transpose().convert_dtypes()
-    LEAGUES = pd.DataFrame(data=[['nhl', '-', '-', (0, 0, 0)]],
-                           columns=['ID', 'Conference', 'Division', 'Colour'])
+    LEAGUES = pd.DataFrame(data=[['NHL', now.strftime(
+        '%Y-%m-%d')]], columns=['Team_name', 'Scraping_date'])
     league_df = pd.concat([LEAGUES, league_df], axis=1)
     return pd.concat([division_df, conference_df, league_df])
 
 
 if __name__ == "__main__":
     team_stats = pd.DataFrame(columns=COLUMNS)
+    start_year = now.year
+    if now.month < 9:
+        start_year = start_year-1
+    team_background = get_data(
+        'team_data', datetime.datetime.now().strftime('%Y'))
+    team_background = team_background.drop(
+        ['Start_year', 'Colour'], axis='columns')
     print('Started working on getting teams.')
     for team in TEAMS:
         print('Working on '+str(team))
-        team_frame = get_team(team)
+        team_frame = get_team(team, team_background)
         team_stats = team_stats.append(team_frame, ignore_index=True)
     team_stats = team_stats.convert_dtypes()
     aggregated_df = aggregate_df(team_stats)
+    team_stats = team_stats.drop(['Division', 'Conference'], axis='columns')
     team_stats = team_stats.append(aggregated_df, ignore_index=True)
-    team_stats.to_csv('data/'+DATE+'.csv')
+    append_data(team_stats, 'salary_data')
+    # team_stats.to_csv('data/'+str(now.strftime('%Y-%m-%d'))+'.csv')

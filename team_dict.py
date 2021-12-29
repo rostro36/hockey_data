@@ -1,4 +1,3 @@
-import pandas as pd
 from datetime import date
 
 today = date.today()
@@ -39,11 +38,10 @@ TEAMS = dict({'bruins': ['bruins', 'East', 'ATL', (252, 181, 20)],
               'sharks': ['sharks', 'West', 'PAC', (0, 109, 117)],
               })
 
-DIVISIONS = pd.DataFrame(data=[['atlantic', 'East', 'ATL', (206, 17, 38)],
-                               ['metropolitan', 'East', 'MET', (185, 151, 91)],
-                               ['central', 'West', 'CEN', (0, 47, 135)],
-                               ['pacific', 'West', 'PAC', (0, 104, 71)]],
-                         columns=['ID', 'Conference', 'Division', 'Colour']).convert_dtypes()
+DIVISIONS = dict({'ATL': ['ATL', 'East', 'ATL', (206, 17, 38)],
+                  'MET': ['MET', 'East', 'MET', (185, 151, 91)],
+                  'CEN': ['CEN', 'West', 'CEN', (0, 47, 135)],
+                  'PAC': ['PAC', 'West', 'PAC', (0, 104, 71)]})
 
-CONFERENCES = pd.DataFrame(data=[['east', 'East', '-', (206, 17, 38)], ['west', 'West', '-', (0, 47, 135)]],
-                           columns=['ID', 'Conference', 'Division', 'Colour']).convert_dtypes()
+CONFERENCES = dict({'East': ['East', 'East', '-', (206, 17, 38)],
+                   'West': ['West', 'West', '-', (0, 47, 135)]})
