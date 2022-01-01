@@ -1,9 +1,11 @@
 import urllib3
 import re
-from sql_connection import get_data, append_data
+from data_writer import append_data
+from data_reader import get_data
 from team_dict import TEAMS
 import pandas as pd
 import datetime
+import json
 
 now = datetime.datetime.utcnow()
 
@@ -107,7 +109,6 @@ def get_team(identifier, team_background):
     combined_players, total_players = calculate_combined(team_players)
     flat_team_salaries = flatten(team_salaries)
     flat_team_players = flatten(team_players)
-
     data = [flatten([list(team_background[team_background['Team_name'] == identifier].iloc[0]),
                      [now.strftime('%Y-%m-%d')],
                      flat_team_players, combined_players, [total_players],
@@ -145,13 +146,44 @@ def aggregate_df(df):
     return pd.concat([division_df, conference_df, league_df])
 
 
+def lambda_handler(event, context):
+    team_stats = pd.DataFrame(columns=COLUMNS)
+    start_year = now.year
+    if now.month < 9:
+        start_year = start_year-1
+    team_background = get_data(
+        'team_data', str(start_year))
+    team_background = team_background.drop(
+        ['Start_year', 'Colour'], axis='columns')
+    print('Started working on getting teams.')
+    for team in TEAMS:
+        print('Working on '+str(team))
+        team_frame = get_team(team, team_background)
+        team_stats = team_stats.append(team_frame, ignore_index=True)
+    team_stats = team_stats.convert_dtypes()
+    aggregated_df = aggregate_df(team_stats)
+    team_stats = team_stats.drop(['Division', 'Conference'], axis='columns')
+    team_stats = team_stats.append(aggregated_df, ignore_index=True)
+    append_data(team_stats, 'salary_data')
+    # team_stats.to_csv('data/'+str(now.strftime('%Y-%m-%d'))+'.csv')
+    return {
+        'statusCode': 200,
+        'body': json.dumps(str(team_stats))
+    }
+
+
+# Use this if Lambda
+# if __name__ == "__main__":
+#    lambda_handler(None, None)
+
+# Keep if running from console
 if __name__ == "__main__":
     team_stats = pd.DataFrame(columns=COLUMNS)
     start_year = now.year
     if now.month < 9:
         start_year = start_year-1
     team_background = get_data(
-        'team_data', datetime.datetime.now().strftime('%Y'))
+        'team_data', str(start_year))
     team_background = team_background.drop(
         ['Start_year', 'Colour'], axis='columns')
     print('Started working on getting teams.')

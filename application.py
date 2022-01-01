@@ -66,6 +66,7 @@ bracket_page = html.Div([
         value=['NHL'],
         multi=True
     ),
+    html.Div(id='bracket-content'),
     dcc.Markdown('''# Salary bracket overview
 This plot shows the roster cap (not in IR, LTIR, "non-roster", taxi squad and no dead cap)
 of different teams and the average of divisions, conferences and the whole league as listed on
@@ -108,4 +109,4 @@ def select_page(pathname):
 
 
 if __name__ == '__main__':
-    application.run(debug=True, port=5000)
+    application.run(debug=False, port=5000)

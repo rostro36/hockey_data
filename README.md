@@ -1,5 +1,5 @@
 # Hockey-data website
-This project daily scrapes [CapFriendly](https://www.capfriendly.com/), stores the contents in a database and visualizes it in a [website](http://hockeydata-env.eba-ygf8p3ma.us-east-1.elasticbeanstalk.com/bracket).
+This project daily scrapes [CapFriendly](https://www.capfriendly.com/), stores the contents in a database and visualizes it in a [website](http://hockeydata2-env-1.eba-kdvxchjn.us-east-1.elasticbeanstalk.com/).
 
 All\* of this is done in the [AWS-cloud](https://aws.amazon.com/):
 The scraping is done by a [Lambda](https://aws.amazon.com/lambda/), the database is in [RDS](https://aws.amazon.com/rds/) and the website is hosted with [Elastic Beanstalk](https://aws.amazon.com/elasticbeanstalk/).
@@ -11,7 +11,11 @@ The whole application is serverless.
 - [plotting.py](./plotting.py) &rightarrow; contains the exact plots to insert into the skeleton
 - [requirements.txt](./requirements.txt) &rightarrow; contains the requirements also used for the elastic beanstalk
 - [scraping.py](./scraping.py) &rightarrow; does the scraping and with slight adaptions can also be used in the Lambda
-- [sql_connection.py](./sql_connection.py) &rightarrow; wrangling and connecting with the database.
+- database connections based on user permissions
+	- [setup.py](./data_reader.py) &rightarrow; setup the users and tables as well as create the first teams
+	- [data_reader.py](./data_reader.py) &rightarrow; read the data for the website
+	- [data_writer.py](./data_reader.py) &rightarrow; write the data for the scraper
+- [setup_tables.ipynb](./setup_tables.ipynb) &rightarrow; first setup to create the tables and users
 - [team_dict.py](./team_dict.py) &rightarrow; contains basic information about the teams and the conferences
 ## Database
 ### Table schema
@@ -21,9 +25,11 @@ To make life easier, choose a **public** database, but with a non-trivial passwo
 
 Select a MySQL instance and the free tier in this case.
 ### Setup tables
-Since the instance is public, we can setup the tables with the function *setup_tables()* from *sql_connection.py* from our local machine.
+Since the instance is public, we can setup the tables with the function *setup_tables()* from *setup.py* from our local machine.
 
-Next, the team information has to be setup with the function *populate_teams('year')* from *sql_connection.py*.
+Next, the team information has to be setup with the function *populate_teams('year')* from *setup.py*.
+
+Both of these steps are also combined in [setup_tables.ipynb](./setup_tables.ipynb).
 
 Afterwards, run *scraping.py* for the first scrape.
 
@@ -32,9 +38,8 @@ If everything worked out, we have the first usable results!
 ### Configuration
 Things to do:
 - Copy code from local editor to Lambda editor
-- Adjust said code
-	- Make lambda_handler work
-	- Import environment variables correctly
+	- Rename *scraping.py* to *lambda_function.py*
+	- Adjust comments
 - Give correct permissions to RDS
 - Give correct VPC &rightarrow; if we want to easily connect to internet, then give no VPC
 - Create and use correct layer
@@ -50,12 +55,13 @@ Upload to S3 and add as layer.
 ## Elastic Beanstalk
 The main  file **has to** be named *application.py*, otherwise much more complicated.
 
+Only keep the necessary files. So in this case, no *data_writer.py*.
+
 *requirements.txt* will be downloaded from pip to get the libraries.
 
 **ZIP THE FILES DIRECTLY, NOT THE FOLDER WITH THE FILES**
 
 ## How to make the project better
-- Different database users
 - Different VPCs and subnets
 	- Database only in private subnet
 	- Scraping and Elastic Beanstalk only connected to database via private subnet

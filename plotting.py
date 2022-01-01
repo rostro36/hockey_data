@@ -1,9 +1,8 @@
 import plotly.graph_objects as go
-# import pandas as pd
 from PIL import Image
 from ast import literal_eval
 import datetime
-from sql_connection import get_data
+from data_reader import get_data
 
 # information = pd.read_csv('data/2021-Dec-16.csv')
 information = get_data(
