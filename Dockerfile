@@ -1,6 +1,6 @@
 FROM python:3.8
 
-COPY application.py team_dict.py plotting.py requirements.txt ./
+COPY application.py data_reader.py plotting.py team_dict.py requirements.txt ./
 COPY data/ data/
 COPY logos/ logos/
 
